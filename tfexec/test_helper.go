@@ -11,6 +11,8 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/hashicorp/go-version"
 )
 
 // mockExecutor impolements the Executor interface for testing.
@@ -282,7 +284,7 @@ provider "aws" {
 
 // SetupTestAccWithApply is an acceptance test helper for initializing a
 // temporary work directory and applying a given source.
-func SetupTestAccWithApply(t *testing.T, source string) TerraformCLI {
+func SetupTestAccWithApply(t *testing.T, workspace string, source string) TerraformCLI {
 	t.Helper()
 
 	e := SetupTestAcc(t, source)
@@ -292,6 +294,14 @@ func SetupTestAccWithApply(t *testing.T, source string) TerraformCLI {
 	err := tf.Init(ctx, "", "-input=false", "-no-color")
 	if err != nil {
 		t.Fatalf("failed to run terraform init: %s", err)
+	}
+
+	//default workspace always exists so don't try to create it
+	if workspace != "default" {
+		err = tf.WorkspaceNew(ctx, workspace)
+		if err != nil {
+			t.Fatalf("failed to run terraform workspace new %s : %s", workspace, err)
+		}
 	}
 
 	err = tf.Apply(ctx, nil, "", "-input=false", "-no-color", "-auto-approve")
@@ -316,4 +326,21 @@ func UpdateTestAccSource(t *testing.T, tf TerraformCLI, source string) {
 	if err := ioutil.WriteFile(filepath.Join(tf.Dir(), testAccSourceFileName), []byte(source), 0644); err != nil {
 		t.Fatalf("failed to update source: %s", err)
 	}
+}
+
+// MatchTerraformVersion returns true if terraform version matches a given constraints.
+func MatchTerraformVersion(ctx context.Context, tf TerraformCLI, constraints string) (bool, error) {
+	tfVersionRaw, err := tf.Version(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get terraform version: %s", err)
+	}
+	v, err := version.NewVersion(tfVersionRaw)
+	if err != nil {
+		return false, fmt.Errorf("failed to parse terraform version: %s", err)
+	}
+	c, err := version.NewConstraint(constraints)
+	if err != nil {
+		return false, fmt.Errorf("failed to new version constraint: %s", err)
+	}
+	return c.Check(v), nil
 }

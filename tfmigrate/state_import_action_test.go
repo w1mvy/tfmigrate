@@ -23,7 +23,7 @@ resource "aws_iam_user" "baz" {
 	name = "baz"
 }
 `
-	tf := tfexec.SetupTestAccWithApply(t, backend+source)
+	tf := tfexec.SetupTestAccWithApply(t, "default", backend+source)
 	ctx := context.Background()
 
 	_, err := tf.StateRm(ctx, nil, []string{"aws_iam_user.foo", "aws_iam_user.baz"})
@@ -44,7 +44,7 @@ resource "aws_iam_user" "baz" {
 		NewStateImportAction("aws_iam_user.baz", "baz"),
 	}
 
-	m := NewStateMigrator(tf.Dir(), actions, nil, false)
+	m := NewStateMigrator(tf.Dir(), actions, &MigratorOption{}, false)
 	err = m.Plan(ctx)
 	if err != nil {
 		t.Fatalf("failed to run migrator plan: %s", err)

@@ -98,8 +98,8 @@ func TestAccTerraformCLIOverrideBackendToLocal(t *testing.T) {
 resource "aws_security_group" "foo" {}
 resource "aws_security_group" "bar" {}
 `
-
-	terraformCLI := SetupTestAccWithApply(t, backend+source)
+	workspace := "work1"
+	terraformCLI := SetupTestAccWithApply(t, workspace, backend+source)
 
 	updatedSource := `
 resource "aws_security_group" "foo2" {}
@@ -125,7 +125,7 @@ resource "aws_security_group" "bar" {}
 		t.Fatalf("an override file already exists: %s", err)
 	}
 
-	switchBackToRemotekFunc, err := terraformCLI.OverrideBackendToLocal(context.Background(), filename)
+	switchBackToRemotekFunc, err := terraformCLI.OverrideBackendToLocal(context.Background(), filename, workspace)
 	if err != nil {
 		t.Fatalf("failed to run OverrideBackendToLocal: %s", err)
 	}
@@ -194,5 +194,36 @@ func TestAccTerraformCLIPlanHasChange(t *testing.T) {
 
 	if changed {
 		t.Fatalf("expect to have changes")
+	}
+}
+
+func TestGetOptionValue(t *testing.T) {
+	cases := []struct {
+		desc   string
+		opts   []string
+		prefix string
+		want   string
+	}{
+		{
+			desc:   "found",
+			opts:   []string{"-input=false", "-no-color", "-out=foo.tfplan", "-detailed-exitcode"},
+			prefix: "-out=",
+			want:   "foo.tfplan",
+		},
+		{
+			desc:   "not found",
+			opts:   []string{"-input=false", "-no-color", "-detailed-exitcode"},
+			prefix: "-out=",
+			want:   "",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			got := getOptionValue(tc.opts, tc.prefix)
+			if got != tc.want {
+				t.Errorf("got: %s, want: %s", got, tc.want)
+			}
+		})
 	}
 }

@@ -18,7 +18,7 @@ resource "aws_security_group" "bar" {}
 resource "aws_security_group" "baz" {}
 resource "aws_security_group" "qux" {}
 `
-	tf := tfexec.SetupTestAccWithApply(t, backend+source)
+	tf := tfexec.SetupTestAccWithApply(t, "default", backend+source)
 	ctx := context.Background()
 
 	updatedSource := `
@@ -40,7 +40,7 @@ resource "aws_security_group" "baz" {}
 		NewStateRmAction([]string{"aws_security_group.qux"}),
 	}
 
-	m := NewStateMigrator(tf.Dir(), actions, nil, false)
+	m := NewStateMigrator(tf.Dir(), actions, &MigratorOption{}, false)
 	err = m.Plan(ctx)
 	if err != nil {
 		t.Fatalf("failed to run migrator plan: %s", err)

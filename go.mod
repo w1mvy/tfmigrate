@@ -3,13 +3,13 @@ module github.com/minamijoyo/tfmigrate
 go 1.15
 
 require (
-	cloud.google.com/go v0.81.0
 	cloud.google.com/go/storage v1.10.0
-	github.com/aws/aws-sdk-go v1.34.16
+	github.com/aws/aws-sdk-go v1.37.0
 	github.com/davecgh/go-spew v1.1.1
 	github.com/google/go-cmp v0.5.5
 	github.com/googleapis/google-cloud-go-testing v0.0.0-20200911160855-bcd43fbb19e8
 	github.com/hashicorp/aws-sdk-go-base v0.6.0
+	github.com/hashicorp/go-version v1.3.0
 	github.com/hashicorp/hcl/v2 v2.6.0
 	github.com/hashicorp/logutils v1.0.0
 	github.com/mattn/go-shellwords v1.0.10
