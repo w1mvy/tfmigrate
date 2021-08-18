@@ -13,8 +13,12 @@ services:
       # Use the same filesystem to avoid a checksum mismatch error
       # or a file busy error caused by asynchronous IO.
       TF_PLUGIN_CACHE_DIR: "/tmp/plugin-cache"
+      # Set this environment to gcs client use http
+      # https://github.com/googleapis/google-cloud-go/blob/master/storage/storage.go
+      STORAGE_EMULATOR_HOST: "fake-gcs-server:4443"
     depends_on:
       - localstack
+      - fake-gcs-server
 
   localstack:
     image: localstack/localstack:0.11.3
@@ -28,7 +32,16 @@ services:
     volumes:
       - "./scripts/localstack:/docker-entrypoint-initaws.d"  # initialize scripts on startup
 
+  fake-gcs-server:
+    image: fsouza/fake-gcs-server:v1.30.0
+    ports:
+      - "4443:4443"
+    volumes:
+      - "./test-fixtures/fake-gcs-server:/data"
+    command: ["-scheme", "http", "-public-host", "fake-gcs-server:4443"]
+
   dockerize:
     image: jwilder/dockerize
     depends_on:
       - localstack
+      - fake-gcs-server
